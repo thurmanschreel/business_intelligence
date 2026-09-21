@@ -34,7 +34,7 @@ jobs = postings |>
   dplyr::select(company, title, location_state, remote, category, posted_at, last_seen_at) |>
   dplyr::mutate(dplyr::across(dplyr::ends_with("_at"), as.Date),
                 days_open = as.numeric(last_seen_at - posted_at))
-
+jobs
 # Q1 - Category that is most remote friendly
 # Logic as follows
 # Find number of jobs per category
@@ -47,6 +47,74 @@ jobs |>
     postings = dplyr::n(),
     remote_share = mean(remote)
   )
-# remind to show how to compute remote_share differently
+
+# Among full-time postings, which states have the highest remote share?
+# Different method from slides
+
+jobs |> 
+  dplyr::group_by(category, location_state) |> 
+  dplyr::summarise(
+        postings = dplyr::n(),
+    remote_share = mean(remote) |> round(digits = 2)
+  ) |> 
+  dplyr::arrange(dplyr::desc(remote_share)) |> 
+  na.omit() # to drop the location_state == NA and any other rows that contain NA
+
+# Notes logic
+jobs |> 
+  dplyr::filter(category == 'fulltime') |> 
+  dplyr::group_by(location_state) |> 
+  dplyr::summarise(
+        postings = dplyr::n(),
+    remote_share = mean(remote) |> round(digits = 2)
+  ) |> 
+  dplyr::arrange(dplyr::desc(remote_share)) |> 
+  na.omit()
+```
+
+# Airbnb Practice
+```{r}
+con = DBI::dbConnect(RSQLite::SQLite(), "../data/midwest_airbnb.db")
+listings = DBI::dbReadTable(con, "listings") |>
+  tibble::as_tibble()
+DBI::dbDisconnect(con)
+dplyr::glimpse(listings)
+
+# 1. How many listings per city?
+## If answer is purely based on the last class, I can group by city and then count number of listings in each city
+
+listings |> dplyr::group_by(city) |> 
+  dplyr::summarise(count = dplyr::n())
+# alternatively, the short cut for code above
+listings |> dplyr::count(city) # count does group by and then n()
+
+# the other option is to simply count the number of times each city occured in the col city
+table(listings$city) # returns a named vector vs above we get a data.frame/tibble
+
+# 2. For entire homes (room_type == "Entire home/apt") that sleep four or more, what is the median price in each city?
+
+listings |> 
+  dplyr::filter(
+    room_type == "Entire home/apt" & accommodates >= 4
+  ) |> 
+  dplyr::group_by(city) |> 
+  dplyr::summarise(
+    median_price = median(price)
+  ) -> q2
+
+# 3. Add price_per_person = price / accommodates. Which three listings are cheapest per person? Believe them?
+
+listings |> 
+  dplyr::mutate(price_per_person = price / accommodates) |> 
+  # for sake of printing nicely, reduce number of cols
+  dplyr::select(city, host_name, name, price, accommodates, price_per_person) |> 
+  dplyr::arrange(price_per_person) |> 
+  head(3)
+
+# 4. Which five host_names have the most listings? [FYI - host names are not unique]
+
+listings |>  dplyr::count(host_name, sort = T)
+# the line below groups by both host_name and host_id (to attempt to find unique hosts)
+listings |>  dplyr::count(host_name, host_id, sort = T)
 ```
 
