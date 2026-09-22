@@ -1,0 +1,52 @@
+---
+title: "Assignment - Subsetting and Importing"
+author: "Thurman Schreel"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Question 1
+```{r}
+con = DBI::dbConnect(RSQLite::SQLite(), "../data/midwest_airbnb.db")
+listings = DBI::dbReadTable(con, "listings")
+```
+
+```{r}
+nrow(listings)
+```
+
+
+# Question 2
+```{r}
+columbus = listings[listings$city == "Columbus", ]
+nrow(columbus)
+```
+
+# Question 3
+```{r}
+chicago = listings[listings$city == "Chicago", ]
+which.max(chicago$price) # finds row with highest price
+chicago$name[which.max(chicago$price)] # finds name of highest price row
+```
+
+# Question 4
+```{r}
+unique_neighbourhoods = unique(chicago$neighbourhood)
+length(unique_neighbourhoods)
+```
+
+# Question 5
+```{r}
+sum(listings$host_is_superhost == "t", na.rm = TRUE)
+```
+
+# Question 6
+```{r}
+over_price = listings[listings$price > 1000, ]
+nrow(over_price)
+```
+
