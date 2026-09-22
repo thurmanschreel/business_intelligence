@@ -16,7 +16,6 @@ qc = querychat::querychat(
   extra_instructions = "data/extra_instructions.md"
 )
 
-qc$app_obj()
-
-DBI::dbListTables(con)
+app <- qc$app_obj()
+app
 
