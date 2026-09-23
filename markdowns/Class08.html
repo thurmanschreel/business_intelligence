@@ -11,7 +11,7 @@
 
 <meta name="author" content="Thurman Schreel" />
 
-<meta name="date" content="2026-09-21" />
+<meta name="date" content="2026-09-23" />
 
 <title>Class 08</title>
 
@@ -1589,7 +1589,7 @@ border-radius: 0px;
 
 <h1 class="title toc-ignore">Class 08</h1>
 <h4 class="author">Thurman Schreel</h4>
-<h4 class="date">2026-09-21</h4>
+<h4 class="date">2026-09-23</h4>
 
 </div>
 
@@ -1602,8 +1602,71 @@ border-radius: 0px;
   httr2::resp_body_string() |&gt;
   jsonlite::fromJSON() -&gt; cincy_crashes</code></pre>
 </div>
+<div id="fred" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> FRED</h1>
+<pre class="r"><code>httr2::request(&quot;https://api.stlouisfed.org/fred/series/observations&quot;) |&gt;
+  httr2::req_url_query(
+    series_id = &quot;IHLIDXUSOH&quot;,
+    api_key = Sys.getenv(&quot;FRED_API_KEY&quot;),
+    file_type = &quot;json&quot;
+  ) |&gt; 
+  httr2::req_perform() |&gt; 
+  httr2::resp_body_string() |&gt; 
+  jsonlite::fromJSON() -&gt;  ohio_jobs
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIkNsYXNzIDA4Ig0KYXV0aG9yOiAiVGh1cm1hbiBTY2hyZWVsIg0KZGF0ZTogImByIFN5cy5EYXRlKClgIg0Kb3V0cHV0OiANCiAgaHRtbF9kb2N1bWVudDoNCiAgICB0b2M6IHRydWUNCiAgICBjb2RlX2ZvbGRpbmc6IHNob3cNCiAgICB0b2NfZmxvYXQ6IHRydWUNCiAgICBudW1iZXJfc2VjdGlvbnM6IHRydWUNCiAgICBjb2RlX2Rvd25sb2FkOiB0cnVlDQogIA0KLS0tDQoNCmBgYHtyIHNldHVwLCBpbmNsdWRlPUZBTFNFfQ0Ka25pdHI6Om9wdHNfY2h1bmskc2V0KGVjaG8gPSBUUlVFKQ0KYGBgDQoNCiMgQ2luY3kgQ3Jhc2hlcw0KYGBge3IgYXBpX2ludHJvfQ0KaHR0cjI6OnJlcXVlc3QoImh0dHBzOi8vZGF0YS5jaW5jaW5uYXRpLW9oLmdvdi9yZXNvdXJjZS9ydm10LXBrbXEuanNvbiIpIHw+DQogIGh0dHIyOjpyZXFfdXJsX3F1ZXJ5KCIkbGltaXQiID0gNSkgfD4NCiAgaHR0cjI6OnJlcV9wZXJmb3JtKCkgfD4NCiAgaHR0cjI6OnJlc3BfYm9keV9zdHJpbmcoKSB8Pg0KICBqc29ubGl0ZTo6ZnJvbUpTT04oKSAtPiBjaW5jeV9jcmFzaGVzDQoNCmBgYA0KDQo=</div>
+jobs_df = ohio_jobs[[13]]
+
+# to get data from Sept 1, 2026
+
+# (a) to get all data then filter the rows I want
+## not the most efficient, but correct
+# first turn date from character into date column
+jobs_df |&gt; 
+  dplyr::mutate(
+    date = lubridate::ymd(date)
+  ) |&gt; 
+  dplyr::filter(date &gt;= &#39;2026-09-01&#39;) -&gt; jobs_df_mod
+
+# [b] use the API since it had observation_start
+
+httr2::request(&quot;https://api.stlouisfed.org/fred/series/observations&quot;) |&gt;
+  httr2::req_url_query(
+    series_id = &quot;IHLIDXUSOH&quot;,
+    api_key = Sys.getenv(&quot;FRED_API_KEY&quot;),
+    file_type = &quot;json&quot;,
+    observation_start =&quot;2026-09-01&quot;
+  ) |&gt; 
+  httr2::req_perform() |&gt; 
+  httr2::resp_body_string() |&gt; 
+  jsonlite::fromJSON() -&gt;  ohio_jobs_sep_2026
+
+ohio_jobs_sep_2026_df = ohio_jobs_sep_2026$observations</code></pre>
+</div>
+<div id="get-finished-lecture-from-canvas" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Get finished lecture
+from canvas</h1>
+</div>
+<div id="usajobs-api" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> USAJOBS API</h1>
+<pre class="r"><code>httr2::request(&quot;https://data.usajobs.gov/api/search&quot;) |&gt;
+  httr2::req_url_query(Keyword = &quot;Data Analyst&quot;, ResultsPerPage = 500) |&gt;
+  httr2::req_headers(
+    Host = &quot;data.usajobs.gov&quot;,
+    &quot;User-Agent&quot; = &quot;schreetp@miamioh.edu&quot;,
+    &quot;Authorization-Key&quot; = Sys.getenv(&quot;USAJOBS_API_KEY&quot;)
+  ) |&gt;
+  httr2::req_perform() |&gt;
+  httr2::resp_body_string() |&gt;
+  jsonlite::fromJSON(flatten = TRUE) -&gt; usa_jobs_list
+
+usa_df = usa_jobs_list$SearchResult$SearchResultItems
+
+
+# index_data_analyst = jobs_small$title |&gt; 
+#  stringr::str_detect(pattern = &#39;Data Analyst|Data Analytics&#39;)</code></pre>
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIkNsYXNzIDA4Ig0KYXV0aG9yOiAiVGh1cm1hbiBTY2hyZWVsIg0KZGF0ZTogImByIFN5cy5EYXRlKClgIg0Kb3V0cHV0OiANCiAgaHRtbF9kb2N1bWVudDoNCiAgICB0b2M6IHRydWUNCiAgICBjb2RlX2ZvbGRpbmc6IHNob3cNCiAgICB0b2NfZmxvYXQ6IHRydWUNCiAgICBudW1iZXJfc2VjdGlvbnM6IHRydWUNCiAgICBjb2RlX2Rvd25sb2FkOiB0cnVlDQogIA0KLS0tDQoNCmBgYHtyIHNldHVwLCBpbmNsdWRlPUZBTFNFfQ0Ka25pdHI6Om9wdHNfY2h1bmskc2V0KGVjaG8gPSBUUlVFKQ0KYGBgDQoNCiMgQ2luY3kgQ3Jhc2hlcw0KYGBge3IgYXBpX2ludHJvfQ0KaHR0cjI6OnJlcXVlc3QoImh0dHBzOi8vZGF0YS5jaW5jaW5uYXRpLW9oLmdvdi9yZXNvdXJjZS9ydm10LXBrbXEuanNvbiIpIHw+DQogIGh0dHIyOjpyZXFfdXJsX3F1ZXJ5KCIkbGltaXQiID0gNSkgfD4NCiAgaHR0cjI6OnJlcV9wZXJmb3JtKCkgfD4NCiAgaHR0cjI6OnJlc3BfYm9keV9zdHJpbmcoKSB8Pg0KICBqc29ubGl0ZTo6ZnJvbUpTT04oKSAtPiBjaW5jeV9jcmFzaGVzDQoNCmBgYA0KDQojIEZSRUQNCmBgYHtyfQ0KaHR0cjI6OnJlcXVlc3QoImh0dHBzOi8vYXBpLnN0bG91aXNmZWQub3JnL2ZyZWQvc2VyaWVzL29ic2VydmF0aW9ucyIpIHw+DQogIGh0dHIyOjpyZXFfdXJsX3F1ZXJ5KA0KICAgIHNlcmllc19pZCA9ICJJSExJRFhVU09IIiwNCiAgICBhcGlfa2V5ID0gU3lzLmdldGVudigiRlJFRF9BUElfS0VZIiksDQogICAgZmlsZV90eXBlID0gImpzb24iDQogICkgfD4gDQogIGh0dHIyOjpyZXFfcGVyZm9ybSgpIHw+IA0KICBodHRyMjo6cmVzcF9ib2R5X3N0cmluZygpIHw+IA0KICBqc29ubGl0ZTo6ZnJvbUpTT04oKSAtPiAgb2hpb19qb2JzDQoNCmpvYnNfZGYgPSBvaGlvX2pvYnNbWzEzXV0NCg0KIyB0byBnZXQgZGF0YSBmcm9tIFNlcHQgMSwgMjAyNg0KDQojIChhKSB0byBnZXQgYWxsIGRhdGEgdGhlbiBmaWx0ZXIgdGhlIHJvd3MgSSB3YW50DQojIyBub3QgdGhlIG1vc3QgZWZmaWNpZW50LCBidXQgY29ycmVjdA0KIyBmaXJzdCB0dXJuIGRhdGUgZnJvbSBjaGFyYWN0ZXIgaW50byBkYXRlIGNvbHVtbg0Kam9ic19kZiB8PiANCiAgZHBseXI6Om11dGF0ZSgNCiAgICBkYXRlID0gbHVicmlkYXRlOjp5bWQoZGF0ZSkNCiAgKSB8PiANCiAgZHBseXI6OmZpbHRlcihkYXRlID49ICcyMDI2LTA5LTAxJykgLT4gam9ic19kZl9tb2QNCg0KIyBbYl0gdXNlIHRoZSBBUEkgc2luY2UgaXQgaGFkIG9ic2VydmF0aW9uX3N0YXJ0DQoNCmh0dHIyOjpyZXF1ZXN0KCJodHRwczovL2FwaS5zdGxvdWlzZmVkLm9yZy9mcmVkL3Nlcmllcy9vYnNlcnZhdGlvbnMiKSB8Pg0KICBodHRyMjo6cmVxX3VybF9xdWVyeSgNCiAgICBzZXJpZXNfaWQgPSAiSUhMSURYVVNPSCIsDQogICAgYXBpX2tleSA9IFN5cy5nZXRlbnYoIkZSRURfQVBJX0tFWSIpLA0KICAgIGZpbGVfdHlwZSA9ICJqc29uIiwNCiAgICBvYnNlcnZhdGlvbl9zdGFydCA9IjIwMjYtMDktMDEiDQogICkgfD4gDQogIGh0dHIyOjpyZXFfcGVyZm9ybSgpIHw+IA0KICBodHRyMjo6cmVzcF9ib2R5X3N0cmluZygpIHw+IA0KICBqc29ubGl0ZTo6ZnJvbUpTT04oKSAtPiAgb2hpb19qb2JzX3NlcF8yMDI2DQoNCm9oaW9fam9ic19zZXBfMjAyNl9kZiA9IG9oaW9fam9ic19zZXBfMjAyNiRvYnNlcnZhdGlvbnMNCg0KYGBgDQoNCiMgR2V0IGZpbmlzaGVkIGxlY3R1cmUgZnJvbSBjYW52YXMNCiMgVVNBSk9CUyBBUEkNCmBgYHtyIHVzYWpvYnN9DQpodHRyMjo6cmVxdWVzdCgiaHR0cHM6Ly9kYXRhLnVzYWpvYnMuZ292L2FwaS9zZWFyY2giKSB8Pg0KICBodHRyMjo6cmVxX3VybF9xdWVyeShLZXl3b3JkID0gIkRhdGEgQW5hbHlzdCIsIFJlc3VsdHNQZXJQYWdlID0gNTAwKSB8Pg0KICBodHRyMjo6cmVxX2hlYWRlcnMoDQogICAgSG9zdCA9ICJkYXRhLnVzYWpvYnMuZ292IiwNCiAgICAiVXNlci1BZ2VudCIgPSAic2NocmVldHBAbWlhbWlvaC5lZHUiLA0KICAgICJBdXRob3JpemF0aW9uLUtleSIgPSBTeXMuZ2V0ZW52KCJVU0FKT0JTX0FQSV9LRVkiKQ0KICApIHw+DQogIGh0dHIyOjpyZXFfcGVyZm9ybSgpIHw+DQogIGh0dHIyOjpyZXNwX2JvZHlfc3RyaW5nKCkgfD4NCiAganNvbmxpdGU6OmZyb21KU09OKGZsYXR0ZW4gPSBUUlVFKSAtPiB1c2Ffam9ic19saXN0DQoNCnVzYV9kZiA9IHVzYV9qb2JzX2xpc3QkU2VhcmNoUmVzdWx0JFNlYXJjaFJlc3VsdEl0ZW1zDQoNCg0KIyBpbmRleF9kYXRhX2FuYWx5c3QgPSBqb2JzX3NtYWxsJHRpdGxlIHw+IA0KIyAgc3RyaW5ncjo6c3RyX2RldGVjdChwYXR0ZXJuID0gJ0RhdGEgQW5hbHlzdHxEYXRhIEFuYWx5dGljcycpDQpgYGANCg0KDQo=</div>
 
 
 </div>
