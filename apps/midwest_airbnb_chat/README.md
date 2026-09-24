@@ -14,10 +14,11 @@ The app connects to a SQLite database (`data/midwest_airbnb.db`), hands the `sco
 
 **Test queries:**
 - "Which Columbus neighbourhood has the priciest entire homes?"
-
+<img width="466" height="405" alt="Screenshot 2026-09-24 122315" src="https://github.com/user-attachments/assets/a56f579e-4c5c-4607-8339-f9163d1ae7e9" />
 
 - "Do superhosts charge more per night than other hosts? Show it as a bar chart."
-
+<img width="458" height="356" alt="Screenshot 2026-09-24 122553" src="https://github.com/user-attachments/assets/378bdd46-c73e-4e25-abd4-f1314a88fe48" />
 
 - "How many listings could host a party of ten?"
+<img width="440" height="242" alt="Screenshot 2026-09-24 122649" src="https://github.com/user-attachments/assets/091adad4-d996-4367-b736-c228801a82a3" />
 
