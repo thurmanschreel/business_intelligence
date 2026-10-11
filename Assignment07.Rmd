@@ -1,0 +1,76 @@
+---
+title: 'Assignment 7: Web Scraping'
+author: "Thurman Schreel"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: TRUE
+    toc_float: TRUE
+    number_sections: TRUE
+    code_download: TRUE
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Departments
+Accountancy 
+Economics
+Entrepreneurship
+Finance
+Information Systems & Analytics
+Marketing
+Management
+
+## Initializing Departments
+```{r departments}
+departments = c("Accountancy", "Economics", "Entrepreneurship", "Finance", "Information Systems & Analytics", "Marketing", "Management")
+
+department_urls = c(
+  "https://miamioh.edu/fsb/directory/?up=/query/all/all/Accountancy/all",
+  "https://miamioh.edu/fsb/directory/?up=/query/all/all/Economics/all",
+  "https://miamioh.edu/fsb/directory/?up=/query/all/all/Entrepreneurship/all",
+  "https://miamioh.edu/fsb/directory/?up=/query/all/all/Finance/all",
+  "https://miamioh.edu/fsb/directory/?up=/query/all/all/Information%20Systems%20--%20Analytics/all",
+  "https://miamioh.edu/fsb/directory/?up=/query/all/all/Marketing/all",
+  "https://miamioh.edu/fsb/directory/?up=/query/all/all/Management/all"
+)
+```
+
+## Scraping Faculty Information
+```{r}
+faculty <- data.frame()
+
+for (i in seq_along(departments)) {
+  webpage = rvest::read_html(department_urls[i])
+  
+  webpage |> rvest::html_elements("td:nth-child(1)") |> rvest::html_text2() -> dept
+  webpage |> rvest::html_elements("td:nth-child(3) a") |> rvest::html_text2() -> names
+  webpage |> rvest::html_elements("td:nth-child(3)") |> rvest::html_text2() -> positions # Returns both name and position
+  webpage |> rvest::html_elements("td:nth-child(3) a") |> rvest::html_attr("href") -> websites
+  
+  positions = stringr::str_replace_all(positions, "(?<=[a-z,])(?=[A-Z])", " ") # Separates line breaks - used AI to assist with this step
+  positions = stringr::str_remove(positions, names) 
+  positions = stringr::str_remove(positions, "ee.*$") # Removes the ee*uniqueid at the end of their position
+  positions = stringr::str_squish(positions) # Keeps just position
+  
+  temp = data.frame(
+    department = dept,
+    name = names,
+    position = positions,
+    website = websites
+  )
+  
+  faculty = rbind(faculty, temp)
+}
+
+faculty = faculty |>
+  dplyr::filter(department %in% departments) # Filters out departments not in list, like FYIC, Office of the Dean, etc.
+
+head(faculty)
+
+```
+
+
