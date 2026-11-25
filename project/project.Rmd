@@ -1,0 +1,22 @@
+---
+title: "401 Project"
+author: "Thurman Schreel"
+date: '`r Sys.Date()`'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(robotstxt)
+
+# Check robots.txt for PGA Tour stats detail pages
+paths_allowed(
+  paths = "/stats/detail/",
+  domain = "www.pgatour.com",
+  bot = "*"
+)
+```
+

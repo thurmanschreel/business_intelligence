@@ -1,0 +1,99 @@
+---
+title: "Exam1Review"
+author: "Thurman Schreel"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+hibp <- jsonlite::fromJSON("../data/hibp_data.json")
+dplyr::glimpse(hibp)
+```
+
+```{r}
+hibp[500,]
+```
+
+```{r}
+library(dplyr)
+library(stringr)
+
+# Count observations with miamioh.edu in the email column
+hibp |> 
+  filter(str_detect(Email, "miamioh.edu")) |> 
+  nrow()
+```
+
+```{r}
+
+
+# Check permission for a specific page path
+robotstxt::paths_allowed(
+  paths = "/wiki/Miami_University",
+  domain = "en.wikipedia.org",
+  bot = "*"
+)
+```
+
+
+```{r}
+url <- "https://miamioh.edu/policy-library/students/undergraduate/academic-regulations/index.html"
+
+page <- rvest::read_html(url)
+
+raw_links <- page |> 
+  rvest::html_elements("main a") |> 
+  rvest::html_attr("href")
+
+mu_policies <- xml2::url_absolute(raw_links, base = url)
+
+mu_policies <- mu_policies[stringr::str_detect(mu_policies, "/academic-regulations/")]
+
+print(mu_policies)
+```
+
+
+```{r}
+
+
+library(rvest)
+library(dplyr)
+
+url <- "https://miamiredhawks.com/sports/swimming-and-diving/roster"
+
+page <- rvest::read_html(url)
+
+swim_df <- page |>
+  rvest::html_elements(
+    "a[data-test-id='s-person-details__personal-single-line-person-link']"
+  ) |>
+  lapply(function(player) {
+
+    name <- player |>
+      rvest::html_element("h3") |>
+      rvest::html_text2()
+
+    year <- player |>
+      rvest::html_element(
+        "div.s-person-details__bio-stats.s-text-details-bold.py-0\.5"
+      ) |>
+      rvest::html_text2()
+
+    data.frame(
+      name = name,
+      year = year,
+    )
+  }) |>
+  dplyr::bind_rows()
+
+```
+
+
+
+
+
+
